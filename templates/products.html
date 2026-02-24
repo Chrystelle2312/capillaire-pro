@@ -81,6 +81,16 @@
             font-size: 1.1em;
             margin: 5px 0;
         }
+
+        /* Style spécifique pour le bouton panier (orange) */
+        .product-card button.btn-cart {
+            background-color: #f0ad4e;
+            margin-top: 10px;
+            width: 100%;
+        }
+        .product-card button.btn-cart:hover {
+            background-color: #ec971f;
+        }
     </style>
 </head>
 <body>
@@ -105,6 +115,13 @@
             <form method="post" action="/create-checkout-session">
                 <input type="hidden" name="product_id" value="{{ product.id }}">
                 <button type="submit">Acheter</button>
+            </form>
+            <!-- Bouton Ajouter au panier -->
+            <form action="/add-to-cart" method="post">
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <button type="submit" class="btn-cart">
+                    Ajouter au panier
+                </button>
             </form>
         </div>
         {% endfor %}
