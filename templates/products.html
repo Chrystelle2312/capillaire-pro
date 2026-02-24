@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Produits Capillaires</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Barre rose en haut */
+        .top-bar {
+            background-color: rgb(210, 44, 105); /* même couleur que les boutons */
+            color: white;
+            padding: 15px 0;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        /* Texte principal */
+        h1 {
+            margin-top: 30px;
+            font-size: 2.5em;
+        }
+
+        /* Texte sous titre */
+        .subtitle {
+            font-size: 1em;
+            margin-bottom: 20px;
+        }
+
+        /* Section produits */
+        .section-title {
+            font-size: 2em;
+            margin-top: 20px;
+            margin-bottom: 15px;
+        }
+
+        .products {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center; /* centre les produits */
+            gap: 20px;
+            padding: 0 20px 40px 20px;
+        }
+
+        .product-card {
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 220px;
+            text-align: center;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+
+        .product-card img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .product-card button {
+            background-color:rgb(210, 44, 105);
+            border: none;
+            padding: 8px 12px;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        .product-card button:hover {
+            background-color: #d06b6b;
+        }
+
+        .product-card p.price {
+            font-weight: bold;
+            color: #f08c8c;
+            font-size: 1.1em;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Barre rose -->
+    <div class="top-bar">Beauté & soin des cheveux</div>
+
+    <!-- Titre principal -->
+    <h1>{{ welcome }}</h1>
+
+    <!-- Texte après le titre principal -->
+    <p class="subtitle">des produits premium pour des cheveux sains, brillants et éclatants.</p>
+
+    <!-- Section produits -->
+    <h2 class="section-title">Nos produits capillaires</h2>
+    <div class="products">
+        {% for product in products %}
+        <div class="product-card">
+            <img src="/static/images/{{ product.image }}" alt="{{ product.name }}">
+            <h3>{{ product.name }}</h3>
+            <p class="price">{{ product.price }} €</p>
+            <p>{{ product.message }}</p>
+            <form method="post" action="/create-checkout-session">
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <button type="submit">Acheter</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
