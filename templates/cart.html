@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mon Panier - Capillaire Pro</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .btn { padding: 10px 15px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; }
+        .btn-back { background-color: #6c757d; }
+    </style>
+</head>
+<body>
+    <h1>Votre Panier</h1>
+    
+    {% if cart_items %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Produit</th>
+                    <th>Prix</th>
+                    <th>Quantité</th>
+                    <th>Sous-total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart_items %}
+                <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.product.price }} €</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.subtotal }} €</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h3>Total à payer : {{ total }} €</h3>
+        <form action="/create-cart-checkout-session" method="post" style="display: inline-block; margin-right: 10px;">
+            <button type="submit" class="btn">Payer tout le panier</button>
+        </form>
+        <a href="/" class="btn btn-back">Continuer mes achats</a>
+    {% else %}
+        <p>Votre panier est vide.</p>
+        <a href="/" class="btn btn-back">Retour à la boutique</a>
+    {% endif %}
+</body>
+</html>

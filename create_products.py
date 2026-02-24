@@ -18,9 +18,15 @@ products_data = [
 ]
 
 for p in products_data:
-    product = Product(name=p["name"], price=p["price"], image=p["image"], message=p["message"])
-    db.add(product)
+    # Vérifie si le produit existe déjà pour éviter les doublons
+    existing_product = db.query(Product).filter(Product.name == p["name"]).first()
+    if not existing_product:
+        product = Product(name=p["name"], price=p["price"], image=p["image"], message=p["message"])
+        db.add(product)
+        print(f"Ajouté : {p['name']}")
+    else:
+        print(f"Déjà présent : {p['name']}")
 
 db.commit()
 db.close()
-print("✅ Produits insérés dans SQLite !")
+print("✅ Initialisation des produits terminée !")
