@@ -23,6 +23,7 @@
                     <th>Prix</th>
                     <th>Quantité</th>
                     <th>Sous-total</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -30,8 +31,27 @@
                 <tr>
                     <td>{{ item.product.name }}</td>
                     <td>{{ item.product.price }} €</td>
-                    <td>{{ item.quantity }}</td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <form action="/remove-from-cart" method="post" style="display:inline;">
+                                <input type="hidden" name="product_id" value="{{ item.product.id }}">
+                                <button type="submit" style="padding: 2px 8px; background: #ccc; color: black; border: 1px solid #999; cursor: pointer;">-</button>
+                            </form>
+                            <span>{{ item.quantity }}</span>
+                            <form action="/add-to-cart" method="post" style="display:inline;">
+                                <input type="hidden" name="product_id" value="{{ item.product.id }}">
+                                <button type="submit" style="padding: 2px 8px; background: #ccc; color: black; border: 1px solid #999; cursor: pointer;">+</button>
+                            </form>
+                        </div>
+                    </td>
                     <td>{{ item.subtotal }} €</td>
+                    <td>
+                        <form action="/create-checkout-session" method="post">
+                            <input type="hidden" name="product_id" value="{{ item.product.id }}">
+                            <input type="hidden" name="quantity" value="{{ item.quantity }}">
+                            <button type="submit" class="btn" style="background-color: #28a745; font-size: 0.8em; padding: 5px 10px;">Payer cet article</button>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

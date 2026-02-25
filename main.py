@@ -101,17 +101,24 @@ def view_cart(request: Request, db: Session = Depends(get_db), user: User = Depe
     return templates.TemplateResponse("cart.html", {"request": request, "cart_items": cart_items, "total": round(total, 2), "user": user})
 
 @app.get("/success")
-def payment_success(request: Request, product_id: int = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):    
+def payment_success(request: Request, product_id: int = None, quantity: int = 1, db: Session = Depends(get_db), user: User = Depends(get_current_user)):    
     line_items_data = []
     total_price = 0
 
     if product_id:
-        # Cas 1 : Achat direct
+        # Cas 1 : Achat direct ou unitaire depuis le panier
         product = db.query(Product).filter(Product.id == product_id).first()
-        if product and product.stock > 0:
-            product.stock -= 1
-            line_items_data.append({"product": product, "quantity": 1})
-            total_price = product.price
+        if product and product.stock >= quantity:
+            product.stock -= quantity
+            line_items_data.append({"product": product, "quantity": quantity})
+            total_price = product.price * quantity
+            
+            # Si l'article était dans le panier, on le retire (puisqu'il est payé)
+            cart = request.session.get("cart", [])
+            for _ in range(quantity):
+                if product_id in cart:
+                    cart.remove(product_id)
+            request.session["cart"] = cart
     else:
         # Cas 2 : Achat via le panier
         cart = request.session.get("cart", [])
@@ -193,7 +200,7 @@ async def login_user(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/logout")
 def logout_user(request: Request):
-    request.session.pop("user_id", None)
+    request.session.clear() # Vide toute la session (panier + utilisateur)
     return RedirectResponse(url="/", status_code=303)
 
 @app.get("/profile")
@@ -303,6 +310,7 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
 async def create_checkout_session(request: Request, db: Session = Depends(get_db)):
     form = await request.form()
     product_id = int(form.get("product_id"))
+    quantity = int(form.get("quantity", 1)) # Par défaut 1 si non spécifié
     product = db.query(Product).filter(Product.id == product_id).first()
 
     session = stripe.checkout.Session.create(
@@ -313,10 +321,10 @@ async def create_checkout_session(request: Request, db: Session = Depends(get_db
                 "product_data": {"name": product.name if product else "Produit supprimé"},
                 "unit_amount": int(product.price * 100),
             },
-            "quantity": 1,
+            "quantity": quantity,
         }],
         mode="payment",
-        success_url=f"{DOMAIN}/success?product_id={product.id}",
+        success_url=f"{DOMAIN}/success?product_id={product.id}&quantity={quantity}",
         cancel_url=f"{DOMAIN}/cancel",
     )
     
@@ -361,6 +369,18 @@ async def add_to_cart(request: Request):
     cart = request.session.get("cart", [])
     cart.append(product_id)
     request.session["cart"] = cart
+    
+    return RedirectResponse(url="/cart", status_code=303)
+
+@app.post("/remove-from-cart")
+async def remove_from_cart(request: Request):
+    form = await request.form()
+    product_id = int(form.get("product_id"))
+    
+    cart = request.session.get("cart", [])
+    if product_id in cart:
+        cart.remove(product_id)
+        request.session["cart"] = cart
     
     return RedirectResponse(url="/cart", status_code=303)
 
