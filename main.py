@@ -100,9 +100,26 @@ def view_cart(request: Request, db: Session = Depends(get_db), user: User = Depe
     return templates.TemplateResponse("cart.html", {"request": request, "cart_items": cart_items, "total": round(total, 2), "user": user})
 
 @app.get("/success")
-def payment_success(request: Request, user: User = Depends(get_current_user)):
-    # On vide le panier après un paiement réussi
-    request.session.pop("cart", None)
+def payment_success(request: Request, product_id: int = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    if product_id:
+        # Cas 1 : Achat direct (bouton "Acheter")
+        product = db.query(Product).filter(Product.id == product_id).first()
+        if product:
+            product.stock = max(0, product.stock - 1)
+            db.commit()
+    else:
+        # Cas 2 : Achat via le panier
+        cart = request.session.get("cart", [])
+        if cart:
+            cart_counts = Counter(cart)
+            products = db.query(Product).filter(Product.id.in_(cart_counts.keys())).all()
+            for product in products:
+                quantity = cart_counts[product.id]
+                product.stock = max(0, product.stock - quantity)
+            db.commit()
+            # On vide le panier après un paiement réussi via le panier
+            request.session.pop("cart", None)
+            
     return templates.TemplateResponse("success.html", {"request": request, "message": "Paiement réussi ! Merci pour votre achat.", "user": user})
 
 @app.get("/cancel")
