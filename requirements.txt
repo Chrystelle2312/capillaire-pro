@@ -6,3 +6,4 @@ stripe
 jinja2
 python-multipart
 itsdangerous
+passlib[bcrypt]

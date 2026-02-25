@@ -8,3 +8,9 @@ class Product(Base):
     price = Column(Float, nullable=False)
     image = Column(String, nullable=False)
     message = Column(String, nullable=True)
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)

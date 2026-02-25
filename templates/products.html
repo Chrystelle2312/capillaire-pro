@@ -11,6 +11,21 @@
             padding: 0;
         }
 
+        /* Barre de navigation */
+        .navbar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #f8f8f8;
+            border-bottom: 1px solid #ddd;
+        }
+        .navbar a, .navbar span {
+            margin-left: 15px;
+            text-decoration: none;
+            color: #333;
+        }
+
         /* Barre rose en haut */
         .top-bar {
             background-color: rgb(210, 44, 105); /* même couleur que les boutons */
@@ -94,6 +109,19 @@
     </style>
 </head>
 <body>
+    <!-- Barre de navigation -->
+    <div class="navbar">
+        {% if user %}
+            <span>Bonjour, {{ user.username }}</span>
+            <a href="/cart">Panier</a>
+            <a href="/logout">Déconnexion</a>
+        {% else %}
+            <a href="/cart">Panier</a>
+            <a href="/login">Connexion</a>
+            <a href="/register">Inscription</a>
+        {% endif %}
+    </div>
+
     <!-- Barre rose -->
     <div class="top-bar">Beauté & soin des cheveux</div>
 
