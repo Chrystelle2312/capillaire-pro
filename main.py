@@ -9,6 +9,7 @@ from models import Product, User, Review, Order, OrderItem
 import auth
 from dotenv import load_dotenv
 from collections import Counter
+from pydantic import BaseModel
 import stripe
 import shutil
 import os
@@ -362,6 +363,32 @@ async def add_to_cart(request: Request):
     request.session["cart"] = cart
     
     return RedirectResponse(url="/cart", status_code=303)
+
+# --- Chatbot Route ---
+class ChatMessage(BaseModel):
+    message: str
+
+@app.post("/chat")
+async def chat_endpoint(chat_msg: ChatMessage):
+    user_message = chat_msg.message.lower()
+    response = ""
+    
+    if "bonjour" in user_message or "salut" in user_message or "hello" in user_message:
+        response = "Bonjour ! Bienvenue chez Chrystelle & Sleeks. Comment puis-je vous aider ?"
+    elif "livraison" in user_message or "expedition" in user_message or "envoi" in user_message:
+        response = "Nous livrons en France métropolitaine sous 3 à 5 jours ouvrés."
+    elif "retour" in user_message or "remboursement" in user_message:
+        response = "Vous avez 14 jours pour changer d'avis. Contactez-nous pour initier un retour."
+    elif "paiement" in user_message or "payer" in user_message:
+        response = "Le paiement est 100% sécurisé via Stripe. Nous acceptons les cartes bancaires."
+    elif "produit" in user_message or "cheveux" in user_message:
+        response = "Nous proposons une gamme complète : shampoings, après-shampoings, masques, huiles... Tout pour des cheveux magnifiques !"
+    elif "contact" in user_message or "mail" in user_message:
+        response = "Vous pouvez nous écrire à support@chrystelle-sleeks.com."
+    else:
+        response = "Désolé, je n'ai pas compris votre question. Je peux vous renseigner sur la livraison, les paiements ou nos produits."
+        
+    return {"response": response}
 
 # Inclure le routeur de l'admin dans l'application principale
 app.include_router(admin_router)

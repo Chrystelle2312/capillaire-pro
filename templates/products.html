@@ -164,5 +164,100 @@
         </div>
         {% endfor %}
     </div>
+
+    <!-- Chatbot Widget -->
+    <div id="chat-widget" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+        <!-- Chat Button -->
+        <button id="chat-toggle" onclick="toggleChat()" style="width: 60px; height: 60px; border-radius: 50%; background-color: #d22c69; color: white; border: none; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.2); font-size: 24px;">
+            💬
+        </button>
+
+        <!-- Chat Window -->
+        <div id="chat-window" style="display: none; position: absolute; bottom: 80px; right: 0; width: 300px; height: 400px; background-color: white; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); flex-direction: column; overflow: hidden;">
+            <!-- Header -->
+            <div style="background-color: #d22c69; color: white; padding: 10px; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
+                <span>Service Client</span>
+                <span onclick="toggleChat()" style="cursor: pointer;">✖</span>
+            </div>
+            
+            <!-- Messages Area -->
+            <div id="chat-messages" style="flex: 1; padding: 10px; overflow-y: auto; background-color: #f9f9f9; display: flex; flex-direction: column; gap: 10px;">
+                <div style="align-self: flex-start; background-color: #e9e9e9; padding: 8px 12px; border-radius: 15px 15px 15px 0; max-width: 80%;">
+                    Bonjour ! Je suis le chatbot de Chrystelle & Sleeks. Comment puis-je vous aider ?
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div style="padding: 10px; border-top: 1px solid #ddd; display: flex; gap: 5px;">
+                <input type="text" id="chat-input" placeholder="Votre message..." style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 20px; outline: none;" onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()" style="background-color: #d22c69; color: white; border: none; padding: 8px 12px; border-radius: 50%; cursor: pointer; width: 40px; height: 40px;">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleChat() {
+            const window = document.getElementById('chat-window');
+            if (window.style.display === 'none') {
+                window.style.display = 'flex';
+            } else {
+                window.style.display = 'none';
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, 'user');
+            input.value = '';
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+                const data = await response.json();
+                addMessage(data.response, 'bot');
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage("Désolé, une erreur est survenue.", 'bot');
+            }
+        }
+
+        function addMessage(text, sender) {
+            const messagesDiv = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            
+            messageDiv.style.padding = '8px 12px';
+            messageDiv.style.maxWidth = '80%';
+            messageDiv.style.wordWrap = 'break-word';
+            
+            if (sender === 'user') {
+                messageDiv.style.alignSelf = 'flex-end';
+                messageDiv.style.backgroundColor = '#d22c69';
+                messageDiv.style.color = 'white';
+                messageDiv.style.borderRadius = '15px 15px 0 15px';
+            } else {
+                messageDiv.style.alignSelf = 'flex-start';
+                messageDiv.style.backgroundColor = '#e9e9e9';
+                messageDiv.style.color = '#333';
+                messageDiv.style.borderRadius = '15px 15px 15px 0';
+            }
+            
+            messageDiv.textContent = text;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    </script>
 </body>
 </html>
