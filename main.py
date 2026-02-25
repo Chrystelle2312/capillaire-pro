@@ -20,7 +20,10 @@ load_dotenv()
 Base.metadata.create_all(bind=engine)
 
 stripe.api_key= os.getenv("STRIPE_SECRET_KEY")
-DOMAIN = os.getenv("DOMAIN", "http://127.0.0.1:8000")
+# On récupère le domaine et on enlève le slash à la fin s'il y en a un pour éviter les doubles //
+DOMAIN = os.getenv("DOMAIN", "http://127.0.0.1:8000").rstrip("/")
+
+print(f"🚀 Démarrage de l'application pour le domaine : {DOMAIN}")
 
 app = FastAPI()
 is_production = os.getenv("RENDER") == "true"
