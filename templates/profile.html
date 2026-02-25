@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mon Profil - Capillaire Pro</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 900px; margin: auto; background-color: #f9f9f9; }
+        h1, h2 { color: #333; }
+        .profile-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .order-history { margin-top: 20px; }
+        .order { background: white; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px; overflow: hidden; }
+        .order-header { background: #f2f2f2; padding: 10px 15px; display: flex; justify-content: space-between; font-size: 0.9em; color: #555; }
+        .order-body { padding: 15px; }
+        .order-item { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
+        .order-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
+        .back-link { display: inline-block; margin-bottom: 20px; text-decoration: none; color: #666; }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← Retour à la boutique</a>
+
+    <div class="profile-card">
+        <h1>Mon Profil</h1>
+        <p><strong>Nom d'utilisateur :</strong> {{ user.username }}</p>
+        <a href="/logout">Se déconnecter</a>
+    </div>
+
+    <h2>Historique de mes achats</h2>
+    <div class="order-history">
+        {% if orders %}
+            {% for order in orders %}
+                <div class="order">
+                    <div class="order-header">
+                        <span>Commande du {{ order.created_at.strftime('%d/%m/%Y à %H:%M') }}</span>
+                        <strong>Total : {{ "%.2f"|format(order.total_price) }} €</strong>
+                    </div>
+                    <div class="order-body">
+                        {% for item in order.items %}
+                            <div class="order-item">
+                                <img src="/static/images/{{ item.product.image }}" alt="{{ item.product.name }}">
+                                <div>
+                                    <strong>{{ item.product.name }}</strong>
+                                    <p>Quantité : {{ item.quantity }} | Prix unitaire : {{ "%.2f"|format(item.price_at_purchase) }} €</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Vous n'avez encore effectué aucun achat.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

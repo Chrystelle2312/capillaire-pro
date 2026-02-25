@@ -3,9 +3,9 @@ from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from database import SessionLocal, Base, engine
-from models import Product, User, Review
+from models import Product, User, Review, Order, OrderItem
 import auth
 from dotenv import load_dotenv
 from collections import Counter
@@ -100,25 +100,43 @@ def view_cart(request: Request, db: Session = Depends(get_db), user: User = Depe
     return templates.TemplateResponse("cart.html", {"request": request, "cart_items": cart_items, "total": round(total, 2), "user": user})
 
 @app.get("/success")
-def payment_success(request: Request, product_id: int = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def payment_success(request: Request, product_id: int = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):    
+    line_items_data = []
+    total_price = 0
+
     if product_id:
-        # Cas 1 : Achat direct (bouton "Acheter")
+        # Cas 1 : Achat direct
         product = db.query(Product).filter(Product.id == product_id).first()
-        if product:
-            product.stock = max(0, product.stock - 1)
-            db.commit()
+        if product and product.stock > 0:
+            product.stock -= 1
+            line_items_data.append({"product": product, "quantity": 1})
+            total_price = product.price
     else:
         # Cas 2 : Achat via le panier
         cart = request.session.get("cart", [])
         if cart:
             cart_counts = Counter(cart)
             products = db.query(Product).filter(Product.id.in_(cart_counts.keys())).all()
+            
             for product in products:
-                quantity = cart_counts[product.id]
-                product.stock = max(0, product.stock - quantity)
-            db.commit()
-            # On vide le panier après un paiement réussi via le panier
+                quantity_purchased = cart_counts[product.id]
+                if product.stock >= quantity_purchased:
+                    product.stock -= quantity_purchased
+                    line_items_data.append({"product": product, "quantity": quantity_purchased})
+                    total_price += product.price * quantity_purchased
+            
             request.session.pop("cart", None)
+
+    # Si un utilisateur est connecté et que des articles ont été traités, on crée une commande.
+    if user and line_items_data:
+        order_items = [
+            OrderItem(product_id=item['product'].id, quantity=item['quantity'], price_at_purchase=item['product'].price) 
+            for item in line_items_data
+        ]
+        new_order = Order(user_id=user.id, total_price=round(total_price, 2), items=order_items)
+        db.add(new_order)
+
+    db.commit() # Sauvegarde les changements de stock et la nouvelle commande en une seule fois.
             
     return templates.TemplateResponse("success.html", {"request": request, "message": "Paiement réussi ! Merci pour votre achat.", "user": user})
 
@@ -176,6 +194,20 @@ async def login_user(request: Request, db: Session = Depends(get_db)):
 def logout_user(request: Request):
     request.session.pop("user_id", None)
     return RedirectResponse(url="/", status_code=303)
+
+@app.get("/profile")
+def view_profile(request: Request, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    if not user:
+        return RedirectResponse(url="/login", status_code=303)
+
+    # Récupère les commandes de l'utilisateur avec les produits associés pour éviter des requêtes multiples
+    orders = db.query(Order).filter(Order.user_id == user.id)\
+        .options(joinedload(Order.items).joinedload(OrderItem.product))\
+        .order_by(Order.created_at.desc())\
+        .all()
+
+    return templates.TemplateResponse("profile.html", {"request": request, "user": user, "orders": orders})
+
 
 # --- Admin Dependencies & Router ---
 admin_router = APIRouter(prefix="/admin")

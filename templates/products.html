@@ -115,7 +115,7 @@
     <!-- Barre de navigation -->
     <div class="navbar">
         {% if user %}
-            <span>Bonjour, {{ user.username }}</span>
+            <a href="/profile" style="font-weight: bold;">Bonjour, {{ user.username }}</a>
             {% if user.is_admin %}
                 <a href="/admin" style="font-weight: bold; color: #d22c69;">Admin</a>
             {% endif %}
