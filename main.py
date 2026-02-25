@@ -48,7 +48,7 @@ def home(request: Request, db: Session = Depends(get_db), user: User = Depends(g
     products = db.query(Product).all()
     return templates.TemplateResponse(
         "products.html", 
-        {"request": request, "products": products, "welcome": "Bienvenue chez Capillaire Pro !", "user": user}
+        {"request": request, "products": products, "welcome": "Bienvenue chez Chrystelle & Sleeks !", "user": user}
     )
 
 @app.get("/product/{product_id}")

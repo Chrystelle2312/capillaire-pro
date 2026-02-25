@@ -1,19 +1,23 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-    <title>Paiement réussi</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <meta charset="UTF-8">
+    <title>Paiement Réussi</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; background-color: #f9f9f9; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { color: #28a745; }
+        .btn { display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #d22c69; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
 </head>
 <body>
-
-<h1>🎉 Merci pour votre achat !</h1>
-<p>Votre paiement a été effectué avec succès.</p>
-
-<a href="/" style="color:white; text-decoration:none;">
-    <button style="background-color:#ff69b4; border:none; padding:10px 20px; color:white; border-radius:5px;">
-        Retour à la boutique
-    </button>
-</a>
-
+    <div class="container">
+        <h1>{{ message }}</h1>
+        <p>Votre commande a bien été enregistrée. Merci de votre confiance !</p>
+        <a href="/" class="btn">Retour à la boutique</a>
+        {% if user %}
+            <a href="/profile" class="btn" style="background-color: #6c757d; margin-left: 10px;">Voir mes commandes</a>
+        {% endif %}
+    </div>
 </body>
 </html>
