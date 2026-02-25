@@ -72,8 +72,11 @@
         }
 
         .product-card img {
-            max-width: 100%;
-            height: auto;
+            width: 100%; /* L'image prend toute la largeur de la carte */
+            height: 200px; /* Hauteur fixe pour toutes les images */
+            object-fit: contain; /* Affiche l'image entière sans la couper */
+            object-position: center; /* Centre l'image dans son cadre */
+            border-radius: 4px; /* Bords légèrement arrondis pour l'image */
         }
 
         .product-card button {
@@ -113,6 +116,9 @@
     <div class="navbar">
         {% if user %}
             <span>Bonjour, {{ user.username }}</span>
+            {% if user.is_admin %}
+                <a href="/admin" style="font-weight: bold; color: #d22c69;">Admin</a>
+            {% endif %}
             <a href="/cart">Panier</a>
             <a href="/logout">Déconnexion</a>
         {% else %}
@@ -136,8 +142,12 @@
     <div class="products">
         {% for product in products %}
         <div class="product-card">
-            <img src="/static/images/{{ product.image }}?v=1" alt="{{ product.name }}">
-            <h3>{{ product.name }}</h3>
+            <!-- Lien vers la page détail -->
+            <a href="/product/{{ product.id }}" style="text-decoration: none; color: inherit;">
+                <img src="/static/images/{{ product.image }}?v=1" alt="{{ product.name }}">
+                <h3>{{ product.name }}</h3>
+            </a>
+            
             <p class="price">{{ product.price }} €</p>
             <p>{{ product.message }}</p>
             <form method="post" action="/create-checkout-session">

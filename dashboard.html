@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Gestion des Produits</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        h1 { color: #333; }
+        .btn { padding: 8px 12px; text-decoration: none; border-radius: 5px; color: white; }
+        .btn-add { background-color: #28a745; margin-bottom: 20px; display: inline-block; }
+        .btn-edit { background-color: #f0ad4e; }
+        .btn-delete { background-color: #d9534f; border: none; cursor: pointer; font-size: 1em; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: middle; }
+        th { background-color: #f2f2f2; }
+        img { max-width: 60px; height: auto; }
+    </style>
+</head>
+<body>
+    <h1>Tableau de bord Administrateur</h1>
+    <a href="/admin/products/add" class="btn btn-add">Ajouter un produit</a>
+    <a href="/" style="margin-left: 10px;">Retour au site</a>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Nom</th>
+                <th>Prix</th>
+                <th>Stock</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td><img src="/static/images/{{ product.image }}" alt="{{ product.name }}"></td>
+                <td>{{ product.name }}</td>
+                <td>{{ product.price }} €</td>
+                <td>{{ product.stock }}</td>
+                <td>
+                    <a href="/admin/products/edit/{{ product.id }}" class="btn btn-edit">Modifier</a>
+                    <form action="/admin/products/delete/{{ product.id }}" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-delete" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce produit ?');">Supprimer</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{% if product %}Modifier{% else %}Ajouter{% endif %} un Produit</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .form-container { max-width: 600px; margin: auto; background: #f9f9f9; padding: 20px; border-radius: 8px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input[type="text"], input[type="number"], textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        textarea { resize: vertical; min-height: 80px; }
+        button { padding: 10px 15px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>{% if product %}Modifier le produit{% else %}Ajouter un nouveau produit{% endif %}</h1>
+        
+        <form method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="name">Nom du produit</label>
+                <input type="text" id="name" name="name" value="{{ product.name if product else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="price">Prix (€)</label>
+                <input type="number" id="price" name="price" step="0.01" value="{{ product.price if product else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="message">Message / Description</label>
+                <textarea id="message" name="message" required>{{ product.message if product else '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="image">Image du produit</label>
+                {% if product and product.image %}
+                    <p>Image actuelle : <img src="/static/images/{{ product.image }}" alt="{{ product.name }}" style="max-width: 100px; vertical-align: middle;"></p>
+                    <p>Remplacer l'image (optionnel) :</p>
+                {% endif %}
+                <input type="file" id="image" name="image" accept="image/*" {% if not product %}required{% endif %}>
+            </div>
+            <button type="submit">{% if product %}Mettre à jour{% else %}Ajouter le produit{% endif %}</button>
+            <a href="/admin" style="margin-left: 10px;">Annuler</a>
+        </form>
+    </div>
+</body>
+</html>

@@ -21,7 +21,7 @@ for p in products_data:
     # Vérifie si le produit existe déjà pour éviter les doublons
     existing_product = db.query(Product).filter(Product.name == p["name"]).first()
     if not existing_product:
-        product = Product(name=p["name"], price=p["price"], image=p["image"], message=p["message"])
+        product = Product(name=p["name"], price=p["price"], image=p["image"], message=p["message"], stock=50)
         db.add(product)
         print(f"Ajouté : {p['name']}")
     else:

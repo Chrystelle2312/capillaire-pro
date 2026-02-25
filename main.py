@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy.orm import Session
 from database import SessionLocal, Base, engine
-from models import Product, User
+from models import Product, User, Review
 import auth
 from dotenv import load_dotenv
 from collections import Counter
@@ -50,6 +50,36 @@ def home(request: Request, db: Session = Depends(get_db), user: User = Depends(g
         "products.html", 
         {"request": request, "products": products, "welcome": "Bienvenue chez Capillaire Pro !", "user": user}
     )
+
+@app.get("/product/{product_id}")
+def product_detail(product_id: int, request: Request, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Produit non trouvé")
+    
+    # Récupérer les avis du produit
+    reviews = db.query(Review).filter(Review.product_id == product_id).all()
+    
+    return templates.TemplateResponse("product_detail.html", {
+        "request": request, 
+        "product": product, 
+        "reviews": reviews,
+        "user": user
+    })
+
+@app.post("/product/{product_id}/review")
+async def add_review(product_id: int, request: Request, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    if not user:
+        return RedirectResponse(url="/login", status_code=303)
+        
+    form = await request.form()
+    rating = int(form.get("rating"))
+    comment = form.get("comment")
+    
+    new_review = Review(product_id=product_id, user_id=user.id, rating=rating, comment=comment)
+    db.add(new_review)
+    db.commit()
+    return RedirectResponse(url=f"/product/{product_id}", status_code=303)
 
 @app.get("/cart")
 def view_cart(request: Request, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
@@ -154,6 +184,7 @@ async def add_product(
     db: Session = Depends(get_db),
     name: str = Form(...),
     price: float = Form(...),
+    stock: int = Form(...),
     message: str = Form(...),
     image: UploadFile = File(...)
 ):
@@ -165,6 +196,7 @@ async def add_product(
     new_product = Product(
         name=name,
         price=price,
+        stock=stock,
         message=message,
         image=image.filename
     )
@@ -185,6 +217,7 @@ async def edit_product(
     db: Session = Depends(get_db),
     name: str = Form(...),
     price: float = Form(...),
+    stock: int = Form(...),
     message: str = Form(...),
     image: UploadFile = File(None) # Image optionnelle à la modification
 ):
@@ -195,6 +228,7 @@ async def edit_product(
     product.name = name
     product.price = price
     product.message = message
+    product.stock = stock
 
     if image and image.filename:
         image_path = f"static/images/{image.filename}"
@@ -232,7 +266,7 @@ async def create_checkout_session(request: Request, db: Session = Depends(get_db
             "quantity": 1,
         }],
         mode="payment",
-        success_url=f"{DOMAIN}/success",
+        success_url=f"{DOMAIN}/success?product_id={product.id}",
         cancel_url=f"{DOMAIN}/cancel",
     )
     
