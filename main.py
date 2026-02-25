@@ -316,6 +316,9 @@ async def create_checkout_session(request: Request, db: Session = Depends(get_db
     quantity = int(form.get("quantity", 1)) # Par défaut 1 si non spécifié
     product = db.query(Product).filter(Product.id == product_id).first()
 
+    # On récupère l'URL de base dynamiquement (ex: https://mon-site.onrender.com ou http://127.0.0.1:8000)
+    base_url = str(request.base_url).rstrip("/")
+
     session = stripe.checkout.Session.create(
         payment_method_types=["card"],
         line_items=[{
@@ -327,8 +330,8 @@ async def create_checkout_session(request: Request, db: Session = Depends(get_db
             "quantity": quantity,
         }],
         mode="payment",
-        success_url=f"{DOMAIN}/success?product_id={product.id}&quantity={quantity}",
-        cancel_url=f"{DOMAIN}/cancel",
+        success_url=f"{base_url}/success?product_id={product.id}&quantity={quantity}",
+        cancel_url=f"{base_url}/cancel",
     )
     
     return RedirectResponse(url=session.url, status_code=303)
@@ -342,6 +345,9 @@ async def create_cart_checkout_session(request: Request, db: Session = Depends(g
 
     cart_counts = Counter(cart)
     products = db.query(Product).filter(Product.id.in_(cart_counts.keys())).all()
+
+    # On récupère l'URL de base dynamiquement
+    base_url = str(request.base_url).rstrip("/")
 
     line_items = []
     for product in products:
@@ -359,8 +365,8 @@ async def create_cart_checkout_session(request: Request, db: Session = Depends(g
         payment_method_types=["card"],
         line_items=line_items,
         mode="payment",
-        success_url=f"{DOMAIN}/success",
-        cancel_url=f"{DOMAIN}/cancel",
+        success_url=f"{base_url}/success",
+        cancel_url=f"{base_url}/cancel",
     )
     return RedirectResponse(url=session.url, status_code=303)
 
