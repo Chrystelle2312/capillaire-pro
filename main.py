@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Request, Depends
-from fastapi.responses import RedirectResponse
+from fastapi import FastAPI, Request, Depends, APIRouter, HTTPException, Form, UploadFile, File
+from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
@@ -10,6 +10,7 @@ import auth
 from dotenv import load_dotenv
 from collections import Counter
 import stripe
+import shutil
 import os
 
 load_dotenv()
@@ -46,8 +47,8 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
 def home(request: Request, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     products = db.query(Product).all()
     return templates.TemplateResponse(
-        "products.html",
-        {"request": request, "products": products, "welcome": "Bienvenue chez Chrystelle and sleeks !", "user": user}
+        "products.html", 
+        {"request": request, "products": products, "welcome": "Bienvenue chez Capillaire Pro !", "user": user}
     )
 
 @app.get("/cart")
@@ -129,6 +130,89 @@ def logout_user(request: Request):
     request.session.pop("user_id", None)
     return RedirectResponse(url="/", status_code=303)
 
+# --- Admin Dependencies & Router ---
+admin_router = APIRouter(prefix="/admin")
+
+def require_admin(user: User = Depends(get_current_user)):
+    if not user or not user.is_admin:
+        raise HTTPException(status_code=403, detail="Accès refusé. Vous devez être administrateur.")
+    return user
+
+# --- Admin Routes ---
+
+@admin_router.get("/", response_class=HTMLResponse, dependencies=[Depends(require_admin)])
+def admin_dashboard(request: Request, db: Session = Depends(get_db)):
+    products = db.query(Product).order_by(Product.id).all()
+    return templates.TemplateResponse("admin_dashboard.html", {"request": request, "products": products})
+
+@admin_router.get("/products/add", response_class=HTMLResponse, dependencies=[Depends(require_admin)])
+def add_product_form(request: Request):
+    return templates.TemplateResponse("admin_productForm.html", {"request": request, "product": None})
+
+@admin_router.post("/products/add", dependencies=[Depends(require_admin)])
+async def add_product(
+    db: Session = Depends(get_db),
+    name: str = Form(...),
+    price: float = Form(...),
+    message: str = Form(...),
+    image: UploadFile = File(...)
+):
+    # Sauvegarde de l'image
+    image_path = f"static/images/{image.filename}"
+    with open(image_path, "wb") as buffer:
+        shutil.copyfileobj(image.file, buffer)
+
+    new_product = Product(
+        name=name,
+        price=price,
+        message=message,
+        image=image.filename
+    )
+    db.add(new_product)
+    db.commit()
+    return RedirectResponse(url="/admin", status_code=303)
+
+@admin_router.get("/products/edit/{product_id}", response_class=HTMLResponse, dependencies=[Depends(require_admin)])
+def edit_product_form(product_id: int, request: Request, db: Session = Depends(get_db)):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Produit non trouvé")
+    return templates.TemplateResponse("admin_productForm.html", {"request": request, "product": product})
+
+@admin_router.post("/products/edit/{product_id}", dependencies=[Depends(require_admin)])
+async def edit_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+    name: str = Form(...),
+    price: float = Form(...),
+    message: str = Form(...),
+    image: UploadFile = File(None) # Image optionnelle à la modification
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Produit non trouvé")
+
+    product.name = name
+    product.price = price
+    product.message = message
+
+    if image and image.filename:
+        image_path = f"static/images/{image.filename}"
+        with open(image_path, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+        product.image = image.filename
+    
+    db.commit()
+    return RedirectResponse(url="/admin", status_code=303)
+
+@admin_router.post("/products/delete/{product_id}", dependencies=[Depends(require_admin)])
+def delete_product(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if product:
+        db.delete(product)
+        db.commit()
+    return RedirectResponse(url="/admin", status_code=303)
+
 # --- Action Routes ---
 
 @app.post("/create-checkout-session")
@@ -195,3 +279,6 @@ async def add_to_cart(request: Request):
     request.session["cart"] = cart
     
     return RedirectResponse(url="/cart", status_code=303)
+
+# Inclure le routeur de l'admin dans l'application principale
+app.include_router(admin_router)
